@@ -9,70 +9,86 @@ type Blogger = {
 }
 
 type EngineerBlogger = Engineer & Blogger;
+// interface EngineerBlogger extends Engineer, Blogger {}
 
-const quill: EngineerBlogger = {
-  name: 'Quill',
+const quil: EngineerBlogger = {
+  name: 'Quil',
   role: 'front-end',
   follower: 1000
 }
 
-// string & number という値は存在しないのでnever型になる
-type tmp = string & number;
-
-// type Engineer1 = {
-//   name: string;
-//   role: string;
-// }
-
-// interface Blogger1 {
-//   name: string;
-//   follower: number;
-// }
-
-// interface EngineerBlogger1 extends Engineer1, Blogger1 {}
-
-// 部分集合の例
 type NumberBoolean = number | boolean;
-type StringNumber =  string | number;
+type StringNumber = string | number;
 type Mix = NumberBoolean & StringNumber;
 
-// 条件文を使って型を絞り込む、3つのType guard
-
-// オーバーロードは上から順に適用されていく
+// 関数のオーバーロードを使って、戻り値の型を正しくTypeScriptに伝える方法 (1つでもオーバーロードがあると元の関数の型定義は無効化されてしまうので、必要な分だけオーバーロードをした方がいい)
+// オーバーロードは一番上から審査されていく
+// 関数型のオーバーロードはinterfaceで定義する必要がある
 function toUpperCase(x: string): string;
 function toUpperCase(x: number): number;
-function toUpperCase(x: any): any;
-function toUpperCase(x: string | number) {
+function toUpperCase(x: string | number): string | number {
   if (typeof x === 'string') {
     return x.toUpperCase();
   }
   return x;
 }
-toUpperCase('hello');
-toUpperCase(3);
-toUpperCase(true);
 
-// 関数型のオーバーロードはinterfaceで定義する必要がある
+const upperHello = toUpperCase('hello');
+
 interface TmpFunc {
   (x: string): number;
   (x: number): number;
 }
+const upperHello1: TmpFunc = function (x: string | number) { return 0 };
 
-const upperHello: TmpFunc = function(x: string | number) {return 0};
+// 関数型のインターセクションはオーバーロードになる
+// interface FuncA {
+//   (a: number, b: string): number;
+//   (a: string, b: number): number;
+// }
+// interface FuncB {
+//   (a: string): number;
+// }
+// let intersectionFunc: FuncA & FuncB;
+// intersectionFunc = function (a: number | string, b?: string | number) { return 10 };
+
+// 関数型のユニオン型はパラメータがインターセクション型、戻り値はユニオン型になる
+interface FuncA {
+  (a: number): number;
+}
+interface FuncB {
+  (a: string): number;
+}
+let unionFunc: FuncA | FuncB;
+unionFunc = function (a: string) { return 3 }
+unionFunc('a');
+// 第一引数はnever型を指定しないといけない
+// unionFunc('', '');
+
+// let unionFunc: (a: never) => number;
+// unionFunc = function (a: number) { return 34 };
+// unionFunc(34);
 
 type NomadWorker = Engineer | Blogger;
 function describeProfile(nomadWorker: NomadWorker) {
+  // EngineerとBloggerに共通してあるプロパティはnameのみ
   console.log(nomadWorker.name);
+
+  // オブジェクト内に指定のキーが存在していたら
   if ('role' in nomadWorker) {
     console.log(nomadWorker.role);
+    console.log(nomadWorker.name);
   }
+
+  // オブジェクト内に指定のキーが存在していたら
   if ('follower' in nomadWorker) {
     console.log(nomadWorker.follower);
+    console.log(nomadWorker.name);
   }
 }
 
 class Dog {
-  // タグ付きUnion
+  // タグ付きユニオンを使って型を絞り込む
   kind: 'dog' = 'dog';
   speak() {
     console.log('bow-wow');
@@ -80,12 +96,12 @@ class Dog {
 }
 
 class Bird {
-  // タグ付きUnion
+  // タグ付きユニオンを使って型を絞り込む
   kind: 'bird' = 'bird';
   speak() {
     console.log('tweet-tweet');
   }
-  fly() {
+  fly () {
     console.log('flutter');
   }
 }
@@ -95,45 +111,37 @@ type Pet = Dog | Bird;
 function havePet(pet: Pet) {
   pet.speak();
 
-  // if文での条件分岐の数が多くなりそうな時に有効
   switch (pet.kind) {
     case 'bird':
-      pet.fly();
-  }
-
-  // in演算子でもいける
-  if ('fly' in pet) {
     pet.fly();
   }
-  // instanceofはBirdから生成されたインスタンスの時に使用できる
+
+  // Birdから生成されたインスタンスであった時に条件を満たす
   if (pet instanceof Bird) {
     pet.fly();
+    pet.speak();
   }
 }
-
 havePet(new Bird());
 
-// typeof,in,instanceof演算子はjavascriptにもある
+// 型アサーションを使って、手動で型を上書きする
+// const input = document.getElementById('input') as HTMLInputElement;
+// input.value = 'initial input value';
+// (document.getElementById('input') as HTMLInputElement).value ='initial input value';
 
-// 型アサーションを使って、手動で型を上書きする方法
+// !を使って、nullじゃないと言い切る方法
+// const input = document.getElementById('input')!;
 
-// const input = <HTMLInputElement>document.getElementById('input');
-const input = document.getElementById('input') as HTMLInputElement;
-input.value = 'initial input value';
-(<HTMLInputElement>document.getElementById('input')).value = 'initial input value';
-
-// インデックスシグネチャを使用して柔軟なオブジェクトを作る方法(使い方に注意)
+// インデックスシグネチャを使用して柔軟なオブジェクトを作る方法 (後からプロパティを追加できる)
 interface Designer {
   name: string;
   [index: string]: string;
 }
-
 const designer: Designer = {
-  name: 'Quill',
-  role: 'Web',
-  age: '32',
-  10: '32'
+  name: 'Quil',
+  role: 'Web'
 }
+designer.position = 'backend';
 
 interface DownloadedData {
   id: number;
@@ -149,54 +157,35 @@ const downloadedData: DownloadedData = {
   id: 1
 }
 console.log(downloadedData.user?.name?.first);
-
-// undefined又はnullの時にno-userを返す。falseの時に必ず返すものではない
+// Nullish Coalescingの使い方 (undefined又はnullの場合に??の右側が返される)
 const userData = downloadedData.user ?? 'no-user';
-// const userData = downloadedData.user || 'no-user';
-
 // LookUp型を使ってオブジェクトのメンバーの型を取得する方法
-type id = DownloadedData["id"];
+type id = DownloadedData["id" | "user"];
 
-// 関数型のインターセクションはオーバーロードになる
+// 型の互換性については慣れて覚えるしかない (都度調べればok)
+// 変数の互換性や、enum、オブジェクト、クラス、関数などそれぞれの互換性があるがパターンが多いので割愛
 
-// interface FuncA {
-//   (a: number, b: string): number;
-//   (a: string, b: number): number;
-// }
-// interface FuncB {
-//   (a: string): number;
-// }
+// TypeScriptの型安全性とJavaScriptの柔軟性について (TypeScriptでも文字列+数字はエラーにならず文字列として返ってくる。厳格な型審査を行なっているのではなくJavaScriptのように柔軟に対応する一面も持っている)
 
-// let intersectionFunc: FuncA & FuncB;
+// レストパラメーターに配列やタプルを指定する方法 (レストパラメータとは残余引数構文により、関数が不定数の引数を配列として受け入れることができるもの)
+// readonly修飾子をつけることができる
+function advancedFn(...args: readonly [number, string, boolean?, ...number[]]) {
 
-// intersectionFunc = function(a: number | string, b?: string | number) {return 0}
-
-// 関数型のユニオン型はパラメータがインターセクション型、戻り値はユニオン型になる
-interface FuncA {
-  (a: number, b: string): number;
 }
-interface FuncB {
-  (a: string): string;
-}
+advancedFn(1, 'hi', true, 2, 3, 4);
 
-let unionFunc: FuncA | FuncB;
+// constアサーション
+let milk = 'milk' as const;
+let drink = milk;
 
-// レストパラメータに配列やタプルを指定する方法 また配列とタプルにはreadonly修飾子をつけれる
-
-function advancedFn(...args: readonly [number, string, boolean, ...number[]]) {
-}
-advancedFn(0,'hi',true,1,2,3,4,5)
-
-// constアサーションはreadonly修飾子として使える
+// 配列にconstアサーションを付与すればタプル型の配列でreadonly修飾子が付与される
 const array = [10, 20] as const;
+
+// オブジェクトにconstアサーションを付与すれば全てのキーにreadonly修飾子が付与されたオブジェクトになる
 const peter = {
   name: 'Peter',
   age: 38
 } as const;
 
-// constアサーションのリテラル指定としての使い方
-const milk = 'milk' as const;
-let drink = milk;
-
-// 型の中でのtypeofの使い方
+// 型の中でのtypeofの使い方 (よく使う)
 type PeterType = typeof peter;
