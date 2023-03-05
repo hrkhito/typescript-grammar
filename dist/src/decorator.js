@@ -30,23 +30,54 @@ function Component(template, selector) {
         };
     };
 }
-// プロパティーデコレータを使う方法とprototype
+// プロパティーデコレータを使う方法とprototype (prototypeとはクラスのメソッドが格納される場所である。ここで言うとUserクラスが持っているprototypeは第一引数のtargetに該当する)
+// プロパティーデコレータは何も返せない (returnがない)
+// staticだった場合はコンストラクター関数が返ってくる (第一引数に)
 function PropertyLogging(target, propertyKey) {
     console.log('propertyLogging');
     console.log(target);
     console.log(propertyKey);
 }
+// メソッドデコレータを使う方法とPropertyDescriptor (PropertyDescriptorは各プロパティについての情報だと思っておけばいい)
+function MethodLogging(target, propertyKey, decription) {
+    console.log('methodLogging');
+    console.log(target);
+    console.log(propertyKey);
+    console.log(decription);
+}
+// アクセサーデコレター
+function AccessorLogging(target, propertyKey, decription) {
+    console.log('accessorLogging');
+    console.log(target);
+    console.log(propertyKey);
+    console.log(decription);
+}
 // 複数のデコレータは同時に使うことができる (デコレータファクトリーは上から下に実行される。そこから得られたデコレータは下から上に実行される)
 let User = class User {
-    constructor(age) {
-        this.age = age;
+    constructor(_age) {
+        this._age = _age;
         this.name = 'Quill';
         console.log('User was created!');
+    }
+    get age() {
+        return this._age;
+    }
+    set age(value) {
+        this._age = value;
+    }
+    greeting() {
+        console.log('hello');
     }
 };
 __decorate([
     PropertyLogging
 ], User.prototype, "name", void 0);
+__decorate([
+    AccessorLogging
+], User.prototype, "age", null);
+__decorate([
+    MethodLogging
+], User.prototype, "greeting", null);
 User = __decorate([
     Component('<h1>{{ name }}</h1>', '#app'),
     Logging('Loggin User')
