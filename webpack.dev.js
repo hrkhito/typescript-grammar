@@ -1,7 +1,7 @@
 const path = require('path');
 module.exports = {
   mode: 'development',
-  entry: './src/react.tsx',
+  entry: './src/library.ts',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
